@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Serialization;
 using System.Text;
 
 namespace S22.Sasl.Mechanisms.Ntlm {
@@ -138,7 +137,7 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 				}
 				return t2;
 			} catch (Exception e) {
-				throw new SerializationException("NTLM Type 2 message could not be " +
+				throw new Exception("NTLM Type 2 message could not be " +
 					"deserialized.", e);
 			}
 		}

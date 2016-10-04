@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0",
+  "description": "Authentication and Security Layer (SASL) for .NET",
+  "authors": [ "nikolaio" ],
+
+  "dependencies": {
+    "NETStandard.Library": "1.6.0",
+    "System.Collections.Specialized": "4.0.1",
+    "System.Diagnostics.TraceSource": "4.0.0"
+  },
+
+  "buildOptions": {
+    "compile": {
+      "exclude": [ "Tests/*", "SaslConfiguration.cs" ]
+    }
+  },
+
+  "frameworks": {
+    "netstandard1.3": {
+    }
+  }
+
+}

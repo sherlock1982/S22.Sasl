@@ -104,7 +104,7 @@ namespace S22.Sasl.Mechanisms.Srp {
 			List<string> list = new List<string>();
 			foreach (string key in Options) {
 				if (String.IsNullOrEmpty(Options[key]) || "true".Equals(
-					Options[key], StringComparison.InvariantCultureIgnoreCase))
+					Options[key], StringComparison.CurrentCultureIgnoreCase))
 					list.Add(key);
 				else
 					list.Add(key + "=" + Options[key]);

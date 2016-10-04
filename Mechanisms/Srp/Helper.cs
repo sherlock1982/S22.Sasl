@@ -49,7 +49,7 @@ namespace S22.Sasl.Mechanisms.Srp {
 		/// <returns>The client's ephemeral private key as a "multi-precision
 		/// integer".</returns>
 		public static Mpi GenerateClientPrivateKey() {
-			using (var rng = new RNGCryptoServiceProvider()) {
+			using (var rng = RandomNumberGenerator.Create()) {
 				byte[] data = new byte[16];
 				rng.GetBytes(data);
 

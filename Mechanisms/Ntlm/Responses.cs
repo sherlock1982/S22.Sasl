@@ -96,7 +96,7 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 			byte[] lowKey = CreateDESKey(keyBytes, 0), highKey =
 				CreateDESKey(keyBytes, 7);
 
-			using (DES des = DES.Create("DES")) {
+			using (var des = TripleDES.Create()) {
 				byte[] output = new byte[8];
 				des.Mode = CipherMode.ECB;
 				// Note: In .NET DES cannot accept a weak key. This can happen for
@@ -181,7 +181,7 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 			byte[] lowKey = CreateDESKey(keyBytes, 0), middleKey =
 				CreateDESKey(keyBytes, 7), highKey =
 				CreateDESKey(keyBytes, 14);
-			using (DES des = DES.Create("DES")) {
+			using (var des = TripleDES.Create()) {
 				des.Mode = CipherMode.ECB;
 				des.Key = lowKey;
 				using (var encryptor = des.CreateEncryptor()) {

@@ -218,7 +218,7 @@ namespace S22.Sasl.Mechanisms {
 				throw new SaslException("Mandatory options are not supported.");
 			// Set up the message digest algorithm.
 			var mda = SelectHashAlgorithm(m.Options["mda"]);
-			HashAlgorithm = Activator.CreateInstance(mda.Item2) as HashAlgorithm;
+			HashAlgorithm = mda.Item2() as HashAlgorithm;
 
 			// Compute public and private key.
 			PublicKey = Helper.ComputeClientPublicKey(m.Generator,
@@ -267,19 +267,19 @@ namespace S22.Sasl.Mechanisms {
 		/// algorithm as well as the type.</returns>
 		/// <exception cref="NotSupportedException">Thrown if none of the algorithms
 		/// specified in the list parameter is supported.</exception>
-		private Tuple<string, Type> SelectHashAlgorithm(string list) {
+		private Tuple<string, Func<HashAlgorithm>> SelectHashAlgorithm(string list) {
 			string[] supported = list.Split(',');
-			var l = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase) {
-				{ "SHA-1", typeof(SHA1Managed) },
-				{ "SHA-256", typeof(SHA256Managed) },
-				{ "SHA-384", typeof(SHA384Managed) },
-				{ "SHA-512", typeof(SHA512Managed) },
-				{ "RIPEMD-160", typeof(RIPEMD160Managed) },
-				{ "MD5", typeof(MD5CryptoServiceProvider) }
+			var l = new Dictionary<string, Func<HashAlgorithm>>(StringComparer.OrdinalIgnoreCase) {
+				{ "SHA-1", SHA1.Create },
+				{ "SHA-256", SHA256.Create },
+				{ "SHA-384", SHA384.Create },
+				{ "SHA-512", SHA512.Create },
+				// { "RIPEMD-160", typeof(RIPEMD160Managed) },
+				{ "MD5", MD5.Create }
 			};
-			foreach (KeyValuePair<string, Type> p in l) {
-				if (supported.Contains(p.Key, StringComparer.InvariantCultureIgnoreCase))
-					return new Tuple<string, Type>(p.Key, p.Value);
+			foreach (var p in l) {
+				if (supported.Contains(p.Key, StringComparer.CurrentCultureIgnoreCase))
+					return new Tuple<string, Func<HashAlgorithm>>(p.Key, p.Value);
 			}
 			throw new NotSupportedException();
 		}

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace S22.Sasl {
 	/// <summary>
@@ -52,7 +53,7 @@ namespace S22.Sasl {
 		public static void Add(string name, Type t) {
 			name.ThrowIfNull("name");
 			t.ThrowIfNull("t");
-			if (!t.IsSubclassOf(typeof(SaslMechanism))) {
+			if (!t.GetTypeInfo().IsSubclassOf(typeof(SaslMechanism))) {
 				throw new ArgumentException("The type t must be a subclass " +
 					"of Sasl.SaslMechanism");
 			}
@@ -68,7 +69,7 @@ namespace S22.Sasl {
 		/// </summary>
 		static SaslFactory() {
 			Mechanisms = new Dictionary<string, Type>(
-				StringComparer.InvariantCultureIgnoreCase);
+				StringComparer.CurrentCultureIgnoreCase);
 
 			// Could be moved to App.config to support SASL "plug-in" mechanisms.
 			var list = new Dictionary<string, Type>() {
