@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using S22.Sasl.Mechanisms.Srp;
 using System.Security.Cryptography;
+using System.Net;
 
 namespace S22.Sasl.Mechanisms {
     /// <summary>
@@ -88,26 +89,13 @@ namespace S22.Sasl.Mechanisms {
 		/// <summary>
 		/// The username to authenticate with.
 		/// </summary>
-		string Username {
+		NetworkCredential Credential {
 			get {
-				return Properties.ContainsKey("Username") ?
-					Properties["Username"] as string : null;
+				return Properties.ContainsKey("Credential") ?
+					Properties["Credential"] as NetworkCredential : null;
 			}
 			set {
-				Properties["Username"] = value;
-			}
-		}
-
-		/// <summary>
-		/// The password to authenticate with.
-		/// </summary>
-		string Password {
-			get {
-				return Properties.ContainsKey("Password") ?
-					Properties["Password"] as string : null;
-			}
-			set {
-				Properties["Password"] = value;
+				Properties["Credential"] = value;
 			}
 		}
 
@@ -117,7 +105,7 @@ namespace S22.Sasl.Mechanisms {
 		string AuthId {
 			get {
 				return Properties.ContainsKey("AuthId") ?
-					Properties["AuthId"] as string : Username;
+					Properties["AuthId"] as string : Credential.UserName;
 			}
 			set {
 				Properties["AuthId"] = value;
@@ -142,8 +130,8 @@ namespace S22.Sasl.Mechanisms {
 		/// or the password parameter is null.</exception>
 		/// <exception cref="ArgumentException">Thrown if the username
 		/// parameter is empty.</exception>
-		internal SaslSrp(string username, string password, byte[] privateKey)
-			: this(username, password) {
+		internal SaslSrp(NetworkCredential credential, byte[] privateKey)
+			: this(credential) {
 				PrivateKey = new Mpi(privateKey);
 		}
 
@@ -158,14 +146,13 @@ namespace S22.Sasl.Mechanisms {
 		/// or the password parameter is null.</exception>
 		/// <exception cref="ArgumentException">Thrown if the username
 		/// parameter is empty.</exception>
-		public SaslSrp(string username, string password) {
-			username.ThrowIfNull("username");
-			if (username == String.Empty)
+		public SaslSrp(NetworkCredential credential) {
+            credential.UserName.ThrowIfNull("username");
+			if (credential.UserName == String.Empty)
 				throw new ArgumentException("The username must not be empty.");
-			password.ThrowIfNull("password");
+            credential.Password.ThrowIfNull("password");
 
-			Username = username;
-			Password = password;
+            Credential = credential;
 		}
 
 		/// <summary>
@@ -178,7 +165,7 @@ namespace S22.Sasl.Mechanisms {
 		protected override byte[] ComputeResponse(byte[] challenge) {
 			// Precondition: Ensure username and password are not null and
 			// username is not empty.
-			if (String.IsNullOrEmpty(Username) || Password == null) {
+			if (String.IsNullOrEmpty(Credential.UserName) || Credential.Password == null) {
 				throw new SaslException("The username must not be null or empty and " +
 					"the password must not be null.");
 			}
@@ -197,7 +184,7 @@ namespace S22.Sasl.Mechanisms {
 		/// <returns>An array of bytes containing the initial client
 		/// response.</returns>
 		private byte[] ComputeInitialResponse() {
-			return new ClientMessage1(Username, AuthId).Serialize();
+			return new ClientMessage1(Credential.UserName, AuthId).Serialize();
 		}
 
 		/// <summary>
@@ -224,11 +211,11 @@ namespace S22.Sasl.Mechanisms {
 			PublicKey = Helper.ComputeClientPublicKey(m.Generator,
 				m.SafePrimeModulus, PrivateKey);
 			// Compute the shared key and client evidence.
-			SharedKey = Helper.ComputeSharedKey(m.Salt, Username, Password,
+			SharedKey = Helper.ComputeSharedKey(m.Salt, Credential.UserName, Credential.Password,
 				PublicKey, m.PublicKey, PrivateKey, m.Generator, m.SafePrimeModulus,
 				HashAlgorithm);
 			ClientProof = Helper.ComputeClientProof(m.SafePrimeModulus,
-				m.Generator, Username, m.Salt, PublicKey, m.PublicKey, SharedKey,
+				m.Generator, Credential.UserName, m.Salt, PublicKey, m.PublicKey, SharedKey,
 				AuthId, m.RawOptions, HashAlgorithm);
 
 			ClientMessage2 response = new ClientMessage2(PublicKey, ClientProof);

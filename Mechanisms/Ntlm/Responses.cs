@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -49,10 +50,9 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 		/// <param name="clientNonce">A random 8-byte client nonce.</param>
 		/// <returns>An array of bytes representing the response to the
 		/// specified challenge.</returns>
-		internal static byte[] ComputeNtlmv2Response(string target, string username,
-			string password, byte[] targetInformation, byte[] challenge,
+		internal static byte[] ComputeNtlmv2Response(string target, NetworkCredential credential, byte[] targetInformation, byte[] challenge,
 			byte[] clientNonce) {
-			byte[] ntlmv2Hash = Ntlmv2Hash(target, username, password),
+			byte[] ntlmv2Hash = Ntlmv2Hash(target, credential),
 				blob = CreateBlob(targetInformation, clientNonce);
 			return LMv2Response(ntlmv2Hash, blob, challenge);
 		}
@@ -68,9 +68,8 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 		/// <param name="clientNonce">A random 8-byte client nonce.</param>
 		/// <returns>An array of bytes representing the response to the
 		/// specified challenge.</returns>
-		internal static byte[] ComputeLMv2Response(string target, string username,
-			string password, byte[] challenge, byte[] clientNonce) {
-			byte[] ntlmv2Hash = Ntlmv2Hash(target, username, password);
+		internal static byte[] ComputeLMv2Response(string target, NetworkCredential credential, byte[] challenge, byte[] clientNonce) {
+			byte[] ntlmv2Hash = Ntlmv2Hash(target, credential);
 			return LMv2Response(ntlmv2Hash, clientNonce, challenge);
 		}
 
@@ -228,12 +227,11 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 		/// <returns>The NTLMv2 hash for the specified input values.</returns>
 		/// <exception cref="ArgumentNullException">Thrown if the username or
 		/// the password parameter is null.</exception>
-		private static byte[] Ntlmv2Hash(string target, string username,
-			string password) {
-			username.ThrowIfNull("username");
-			password.ThrowIfNull("password");
-			byte[] ntlmHash = NtlmHash(password);
-			string identity = username.ToUpperInvariant() + target;
+		private static byte[] Ntlmv2Hash(string target, NetworkCredential credential) {
+            credential.UserName.ThrowIfNull("username");
+            credential.Password.ThrowIfNull("password");
+			byte[] ntlmHash = NtlmHash(credential.Password);
+			string identity = credential.UserName.ToUpperInvariant() + target;
 			using (var hmac = new HMACMD5(ntlmHash))
 				return hmac.ComputeHash(Encoding.Unicode.GetBytes(identity));
 		}

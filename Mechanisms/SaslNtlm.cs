@@ -1,5 +1,6 @@
 ﻿using S22.Sasl.Mechanisms.Ntlm;
 using System;
+using System.Net;
 
 namespace S22.Sasl.Mechanisms {
     /// <summary>
@@ -47,26 +48,13 @@ namespace S22.Sasl.Mechanisms {
 		/// <summary>
 		/// The username to authenticate with.
 		/// </summary>
-		protected string Username {
+		protected NetworkCredential Credential {
 			get {
-				return Properties.ContainsKey("Username") ?
-					Properties["Username"] as string : null;
+				return Properties.ContainsKey("Credential") ?
+					Properties["Credential"] as NetworkCredential : null;
 			}
 			set {
-				Properties["Username"] = value;
-			}
-		}
-
-		/// <summary>
-		/// The password to authenticate with.
-		/// </summary>
-		protected string Password {
-			get {
-				return Properties.ContainsKey("Password") ?
-					Properties["Password"] as string : null;
-			}
-			set {
-				Properties["Password"] = value;
+				Properties["Credential"] = value;
 			}
 		}
 
@@ -88,15 +76,14 @@ namespace S22.Sasl.Mechanisms {
 		/// or the password parameter is null.</exception>
 		/// <exception cref="ArgumentException">Thrown if the username
 		/// parameter is empty.</exception>
-		public SaslNtlm(string username, string password) {
-			username.ThrowIfNull("username");
-			if (username == String.Empty)
+		public SaslNtlm(NetworkCredential credential) {
+			credential.UserName.ThrowIfNull("username");
+			if (credential.UserName == String.Empty)
 				throw new ArgumentException("The username must not be empty.");
-			password.ThrowIfNull("password");
+            credential.Password.ThrowIfNull("password");
 
-			Username = username;
-			Password = password;
-		}
+            Credential = credential;
+        }
 
 		/// <summary>
 		/// Computes the client response to the specified NTLM challenge.
@@ -149,7 +136,7 @@ namespace S22.Sasl.Mechanisms {
 		protected byte[] ComputeChallengeResponse(byte[] challenge) {
 			try {
 				Type2Message msg = Type2Message.Deserialize(challenge);
-				byte[] data = new Type3Message(Username, Password, msg.Challenge,
+				byte[] data = new Type3Message(Credential, msg.Challenge,
 					"Workstation").Serialize();
 				return data;
 			} catch (Exception e) {

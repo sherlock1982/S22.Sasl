@@ -1,5 +1,6 @@
 ﻿using S22.Sasl.Mechanisms.Ntlm;
 using System;
+using System.Net;
 
 namespace S22.Sasl.Mechanisms {
     /// <summary>
@@ -25,8 +26,8 @@ namespace S22.Sasl.Mechanisms {
 		/// or the password parameter is null.</exception>
 		/// <exception cref="ArgumentException">Thrown if the username
 		/// parameter is empty.</exception>
-		public SaslNtlmv2(string username, string password)
-			: base(username, password) {
+		public SaslNtlmv2(NetworkCredential credential)
+			: base(credential) {
 		}
 
 		/// <summary>
@@ -57,8 +58,8 @@ namespace S22.Sasl.Mechanisms {
 			try {
 				Type2Message msg = Type2Message.Deserialize(challenge);
 				// This creates an NTLMv2 challenge response.
-				byte[] data = new Type3Message(Username, Password, msg.Challenge,
-					Username, true, msg.TargetName,
+				byte[] data = new Type3Message(Credential, msg.Challenge,
+					Credential.UserName, true, msg.TargetName,
 					msg.RawTargetInformation).Serialize();
 				return data;
 			} catch (Exception e) {

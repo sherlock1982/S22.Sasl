@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 
 namespace S22.Sasl.Mechanisms {
@@ -43,26 +44,13 @@ namespace S22.Sasl.Mechanisms {
 		/// <summary>
 		/// The username to authenticate with.
 		/// </summary>
-		string Username {
+		NetworkCredential Credential {
 			get {
-				return Properties.ContainsKey("Username") ?
-					Properties["Username"] as string : null;
+				return Properties.ContainsKey("Credential") ?
+					Properties["Credential"] as NetworkCredential : null;
 			}
 			set {
-				Properties["Username"] = value;
-			}
-		}
-
-		/// <summary>
-		/// The plain-text password to authenticate with.
-		/// </summary>
-		string Password {
-			get {
-				return Properties.ContainsKey("Password") ?
-					Properties["Password"] as string : null;
-			}
-			set {
-				Properties["Password"] = value;
+				Properties["Credential"] = value;
 			}
 		}
 
@@ -84,14 +72,13 @@ namespace S22.Sasl.Mechanisms {
 		/// or the password parameter is null.</exception>
 		/// <exception cref="ArgumentException">Thrown if the username
 		/// parameter is empty.</exception>
-		public SaslPlain(string username, string password) {
-			username.ThrowIfNull("username");
-			if (username == String.Empty)
+		public SaslPlain(NetworkCredential credential) {
+            credential.UserName.ThrowIfNull("username");
+			if (credential.UserName == String.Empty)
 				throw new ArgumentException("The username must not be empty.");
-			password.ThrowIfNull("password");
+            credential.Password.ThrowIfNull("password");
 
-			Username = username;
-			Password = password;
+            Credential = credential;
 		}
 
 		/// <summary>
@@ -105,7 +92,7 @@ namespace S22.Sasl.Mechanisms {
 		protected override byte[] ComputeResponse(byte[] challenge) {
 			// Precondition: Ensure username and password are not null and
 			// username is not empty.
-			if (String.IsNullOrEmpty(Username) || Password == null) {
+			if (String.IsNullOrEmpty(Credential.UserName) || Credential.Password == null) {
 				throw new SaslException("The username must not be null or empty and " +
 					"the password must not be null.");
 			}
@@ -113,7 +100,7 @@ namespace S22.Sasl.Mechanisms {
 			Completed = true;
 			// Username and password are delimited by a NUL (U+0000) character
 			// and the response shall be encoded as UTF-8.
-			return Encoding.UTF8.GetBytes("\0" + Username + "\0" + Password);
+			return Encoding.UTF8.GetBytes("\0" + Credential.UserName + "\0" + Credential.Password);
 		}
 	}
 }

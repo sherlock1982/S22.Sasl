@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -55,26 +56,13 @@ namespace S22.Sasl.Mechanisms {
 		/// <summary>
 		/// The username to authenticate with.
 		/// </summary>
-		string Username {
+		NetworkCredential Credential {
 			get {
-				return Properties.ContainsKey("Username") ?
-					Properties["Username"] as string : null;
+				return Properties.ContainsKey("Credential") ?
+					Properties["Credential"] as NetworkCredential : null;
 			}
 			set {
-				Properties["Username"] = value;
-			}
-		}
-
-		/// <summary>
-		/// The password to authenticate with.
-		/// </summary>
-		string Password {
-			get {
-				return Properties.ContainsKey("Password") ?
-					Properties["Password"] as string : null;
-			}
-			set {
-				Properties["Password"] = value;
+				Properties["Credential"] = value;
 			}
 		}
 
@@ -96,8 +84,8 @@ namespace S22.Sasl.Mechanisms {
 		/// or the password parameter is null.</exception>
 		/// <exception cref="ArgumentException">Thrown if the username
 		/// parameter is empty.</exception>
-		internal SaslDigestMd5(string username, string password, string cnonce)
-			: this(username, password) {
+		internal SaslDigestMd5(NetworkCredential credential, string cnonce)
+			: this(credential) {
 				Cnonce = cnonce;
 		}
 
@@ -112,14 +100,13 @@ namespace S22.Sasl.Mechanisms {
 		/// or the password parameter is null.</exception>
 		/// <exception cref="ArgumentException">Thrown if the username
 		/// parameter is empty.</exception>
-		public SaslDigestMd5(string username, string password) {
-			username.ThrowIfNull("username");
-			if (username == String.Empty)
+		public SaslDigestMd5(NetworkCredential credential) {
+			credential.UserName.ThrowIfNull("username");
+			if (credential.UserName == String.Empty)
 				throw new ArgumentException("The username must not be empty.");
-			password.ThrowIfNull("password");
+            credential.Password.ThrowIfNull("password");
 
-			Username = username;
-			Password = password;
+            Credential = credential;
 		}
 
 		/// <summary>
@@ -144,7 +131,7 @@ namespace S22.Sasl.Mechanisms {
 		private byte[] ComputeDigestResponse(byte[] challenge) {
 			// Precondition: Ensure username and password are not null and
 			// username is not empty.
-			if (String.IsNullOrEmpty(Username) || Password == null) {
+			if (String.IsNullOrEmpty(Credential.UserName) || Credential.Password == null) {
 				throw new SaslException("The username must not be null or empty and " +
 					"the password must not be null.");
 			}
@@ -153,13 +140,13 @@ namespace S22.Sasl.Mechanisms {
 			NameValueCollection fields = ParseDigestChallenge(decoded);
 			string digestUri = "imap/" + fields["realm"];
 			string responseValue = ComputeDigestResponseValue(fields, Cnonce, digestUri,
-				Username, Password);
+				Credential);
 
 			// Create the challenge-response string.
 			string[] directives = new string[] {
 				// We don't use UTF-8 in the current implementation.
 				//"charset=utf-8",
-				"username=" + Dquote(Username),
+				"username=" + Dquote(Credential.UserName),
 				"realm=" + Dquote(fields["realm"]),
 				"nonce="+ Dquote(fields["nonce"]),
 				"nc=00000001",
@@ -216,14 +203,14 @@ namespace S22.Sasl.Mechanisms {
 		/// <remarks>Refer to RFC 2831, section 2.1.2.1 for a detailed
 		/// description of the computation of the response-value.</remarks>
 		private static string ComputeDigestResponseValue(NameValueCollection challenge,
-			string cnonce, string digestUri, string username, string password) {
+			string cnonce, string digestUri, NetworkCredential credential) {
 			// The username, realm and password are encoded with ISO-8859-1
 			// (Compare RFC 2831, p. 10).
 			Encoding enc = Encoding.GetEncoding("ISO-8859-1");
 			string ncValue = "00000001", realm = challenge["realm"];
 			// Construct A1.
 			using (var md5p = System.Security.Cryptography.MD5.Create()) {
-				byte[] data = enc.GetBytes(username + ":" + realm + ":" + password);
+				byte[] data = enc.GetBytes(credential.UserName + ":" + realm + ":" + credential.Password);
 				data = md5p.ComputeHash(data);
 				string A1 = enc.GetString(data) + ":" + challenge["nonce"] + ":" +
 					cnonce;

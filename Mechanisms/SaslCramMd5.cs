@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -44,26 +45,13 @@ namespace S22.Sasl.Mechanisms {
 		/// <summary>
 		/// The username to authenticate with.
 		/// </summary>
-		string Username {
+		NetworkCredential Credential {
 			get {
-				return Properties.ContainsKey("Username") ?
-					Properties["Username"] as string : null;
+				return Properties.ContainsKey("Credential") ?
+					Properties["Credential"] as NetworkCredential : null;
 			}
 			set {
-				Properties["Username"] = value;
-			}
-		}
-
-		/// <summary>
-		/// The password to authenticate with.
-		/// </summary>
-		string Password {
-			get {
-				return Properties.ContainsKey("Password") ?
-					Properties["Password"] as string : null;
-			}
-			set {
-				Properties["Password"] = value;
+				Properties["Credential"] = value;
 			}
 		}
 
@@ -85,14 +73,13 @@ namespace S22.Sasl.Mechanisms {
 		/// or the password parameter is null.</exception>
 		/// <exception cref="ArgumentException">Thrown if the username
 		/// parameter is empty.</exception>
-		public SaslCramMd5(string username, string password) {
-			username.ThrowIfNull("username");
-			if (username == String.Empty)
+		public SaslCramMd5(NetworkCredential credential) {
+            credential.UserName.ThrowIfNull("username");
+			if (credential.UserName == String.Empty)
 				throw new ArgumentException("The username must not be empty.");
-			password.ThrowIfNull("password");
+            credential.Password.ThrowIfNull("password");
 
-			Username = username;
-			Password = password;
+            Credential = credential;
 		}
 
 		/// <summary>
@@ -105,7 +92,7 @@ namespace S22.Sasl.Mechanisms {
 		protected override byte[] ComputeResponse(byte[] challenge) {
 			// Precondition: Ensure username and password are not null and
 			// username is not empty.
-			if (String.IsNullOrEmpty(Username) || Password == null) {
+			if (String.IsNullOrEmpty(Credential.UserName) || Credential.Password == null) {
 				throw new SaslException("The username must not be null or empty and " +
 					"the password must not be null.");
 			}
@@ -113,12 +100,12 @@ namespace S22.Sasl.Mechanisms {
 			Completed = true;
 			// Compute the encrypted challenge as a hex-string.
 			string hex = String.Empty;
-			using (var hmac = new HMACMD5(Encoding.ASCII.GetBytes(Password))) {
+			using (var hmac = new HMACMD5(Encoding.ASCII.GetBytes(Credential.Password))) {
 				byte[] encrypted = hmac.ComputeHash(challenge);
 				hex = BitConverter.ToString(encrypted).ToLower().Replace("-",
 					String.Empty);
 			}
-			return Encoding.ASCII.GetBytes(Username + " " + hex);	
+			return Encoding.ASCII.GetBytes(Credential.UserName + " " + hex);	
 		}
 	}
 }

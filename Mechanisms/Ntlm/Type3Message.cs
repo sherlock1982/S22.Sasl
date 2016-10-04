@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Text;
 
 namespace S22.Sasl.Mechanisms.Ntlm {
@@ -167,10 +168,10 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 		/// <remarks>The target name is a domain name for domain accounts, or
 		/// a server name for local machine accounts. All security buffers will
 		/// be encoded as Unicode.</remarks>
-		public Type3Message(string username, string password, byte[] challenge,
+		public Type3Message(NetworkCredential credential, byte[] challenge,
 			string workstation, bool ntlmv2 = false, string targetName = null,
 			byte[] targetInformation = null)
-			: this(username, password, challenge, true, workstation, ntlmv2,
+			: this(credential, challenge, true, workstation, ntlmv2,
 					targetName, targetInformation)
 		{
 		}
@@ -198,17 +199,17 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 		/// a server name for local machine accounts.</remarks>
 		/// <exception cref="ArgumentNullException">Thrown if the username, password
 		/// or challenge parameters are null.</exception>
-		public Type3Message(string username, string password, byte[] challenge,
+		public Type3Message(NetworkCredential credential, byte[] challenge,
 			bool useUnicode, string workstation, bool ntlmv2 = false,
 			string targetName = null, byte[] targetInformation = null) {
-			// Preconditions.
-			username.ThrowIfNull("username");
-			password.ThrowIfNull("password");
+            // Preconditions.
+            credential.UserName.ThrowIfNull("username");
+            credential.Password.ThrowIfNull("password");
 			challenge.ThrowIfNull("challenge");
 			encoding = useUnicode ? Encoding.Unicode : Encoding.ASCII;
 
 			// Setup the security buffers contents.
-			this.username = encoding.GetBytes(username);
+			this.username = encoding.GetBytes(credential.UserName);
 			this.workstation = encoding.GetBytes(workstation);
 			this.targetName = String.IsNullOrEmpty(targetName) ? new byte[0] :
 				encoding.GetBytes(targetName);
@@ -216,14 +217,12 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 			this.sessionKey = new byte[0];
 			// Compute the actual challenge response data.
 			if (!ntlmv2) {
-				LMResponse = Responses.ComputeLMResponse(challenge, password);
-				NtlmResponse = Responses.ComputeNtlmResponse(challenge, password);
+				LMResponse = Responses.ComputeLMResponse(challenge, credential.Password);
+				NtlmResponse = Responses.ComputeNtlmResponse(challenge, credential.Password);
 			} else {
 				byte[] cnonce = GetCNonce();
-				LMResponse = Responses.ComputeLMv2Response(targetName, username,
-					password, challenge, cnonce);
-				NtlmResponse = Responses.ComputeNtlmv2Response(targetName,
-					username, password, targetInformation, challenge, cnonce);
+				LMResponse = Responses.ComputeLMv2Response(targetName, credential, challenge, cnonce);
+				NtlmResponse = Responses.ComputeNtlmv2Response(targetName, credential, targetInformation, challenge, cnonce);
 			}
 			// We spoof an OS version of Windows 7 Build 7601.
 			OSVersion = new OSVersion(6, 1, 7601);

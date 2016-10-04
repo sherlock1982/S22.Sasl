@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -66,26 +67,13 @@ namespace S22.Sasl.Mechanisms {
 		/// <summary>
 		/// The username to authenticate with.
 		/// </summary>
-		string Username {
+		NetworkCredential Credential {
 			get {
-				return Properties.ContainsKey("Username") ?
-					Properties["Username"] as string : null;
+				return Properties.ContainsKey("Credential") ?
+					Properties["Credential"] as NetworkCredential : null;
 			}
 			set {
-				Properties["Username"] = value;
-			}
-		}
-
-		/// <summary>
-		/// The password to authenticate with.
-		/// </summary>
-		string Password {
-			get {
-				return Properties.ContainsKey("Password") ?
-					Properties["Password"] as string : null;
-			}
-			set {
-				Properties["Password"] = value;
+				Properties["Credential"] = value;
 			}
 		}
 
@@ -107,8 +95,8 @@ namespace S22.Sasl.Mechanisms {
 		/// or the password parameter is null.</exception>
 		/// <exception cref="ArgumentException">Thrown if the username
 		/// parameter is empty.</exception>
-		internal SaslScramSha1(string username, string password, string cnonce)
-			: this(username, password) {
+		internal SaslScramSha1(NetworkCredential credential, string cnonce)
+			: this(credential) {
 				Cnonce = cnonce;
 		}
 
@@ -123,14 +111,13 @@ namespace S22.Sasl.Mechanisms {
 		/// or the password parameter is null.</exception>
 		/// <exception cref="ArgumentException">Thrown if the username
 		/// parameter is empty.</exception>
-		public SaslScramSha1(string username, string password) {
-			username.ThrowIfNull("username");
-			if (username == String.Empty)
+		public SaslScramSha1(NetworkCredential credential) {
+			credential.UserName.ThrowIfNull("username");
+			if (credential.UserName == String.Empty)
 				throw new ArgumentException("The username must not be empty.");
-			password.ThrowIfNull("password");
+            credential.Password.ThrowIfNull("password");
 
-			Username = username;
-			Password = password;
+            Credential = credential;
 		}
 
 		/// <summary>
@@ -143,7 +130,7 @@ namespace S22.Sasl.Mechanisms {
 		protected override byte[] ComputeResponse(byte[] challenge) {
 			// Precondition: Ensure username and password are not null and
 			// username is not empty.
-			if (String.IsNullOrEmpty(Username) || Password == null) {
+			if (String.IsNullOrEmpty(Credential.UserName) || Credential.Password == null) {
 				throw new SaslException("The username must not be null or empty and " +
 					"the password must not be null.");
 			}
@@ -163,7 +150,7 @@ namespace S22.Sasl.Mechanisms {
 		/// response.</returns>
 		private byte[] ComputeInitialResponse() {
 			// We don't support channel binding.
-			return Encoding.UTF8.GetBytes("n,,n=" + SaslPrep(Username) + ",r=" +
+			return Encoding.UTF8.GetBytes("n,,n=" + SaslPrep(Credential.UserName) + ",r=" +
 				Cnonce);
 		}
 
@@ -183,14 +170,14 @@ namespace S22.Sasl.Mechanisms {
 			if (!VerifyServerNonce(nonce))
 				throw new SaslException("Invalid server nonce: " + nonce);
 			// Calculate the client proof (refer to RFC 5802, p.7).
-			string clientFirstBare = "n=" + SaslPrep(Username) + ",r=" + Cnonce,
+			string clientFirstBare = "n=" + SaslPrep(Credential.UserName) + ",r=" + Cnonce,
 				serverFirstMessage = Encoding.UTF8.GetString(challenge),
 				withoutProof = "c=" +
 				Convert.ToBase64String(Encoding.UTF8.GetBytes("n,,")) + ",r=" +
 				nonce;
 			AuthMessage = clientFirstBare + "," + serverFirstMessage + "," +
 				withoutProof;
-			SaltedPassword = Hi(Password, salt, iterationCount);
+			SaltedPassword = Hi(Credential.Password, salt, iterationCount);
 			byte[] clientKey = HMAC(SaltedPassword, "Client Key"),
 				storedKey = H(clientKey),
 				clientSignature = HMAC(storedKey, AuthMessage),
