@@ -6,18 +6,18 @@ using S22.Sasl.Mechanisms.Srp;
 using System.Security.Cryptography;
 
 namespace S22.Sasl.Mechanisms {
-	/// <summary>
-	/// Implements the Sasl Secure Remote Password (SRP) authentication
-	/// mechanism as is described in the IETF SRP 08 draft.
-	/// </summary>
-	/// <remarks>
-	/// Some notes:
-	///  - Don't bother with the example given in the IETF 08 draft
-	///   document (7.5 Example); It is broken.
-	///  - Integrity and confidentiality protection is not implemented.
-	///   In fact, the "mandatory"-option is not supported at all.
-	/// </remarks>
-	internal class SaslSrp : SaslMechanism {
+    /// <summary>
+    /// Implements the Sasl Secure Remote Password (SRP) authentication
+    /// mechanism as is described in the IETF SRP 08 draft.
+    /// </summary>
+    /// <remarks>
+    /// Some notes:
+    ///  - Don't bother with the example given in the IETF 08 draft
+    ///   document (7.5 Example); It is broken.
+    ///  - Integrity and confidentiality protection is not implemented.
+    ///   In fact, the "mandatory"-option is not supported at all.
+    /// </remarks>
+    public class SaslSrp : SaslMechanism {
 		bool Completed = false;
 
 		/// <summary>

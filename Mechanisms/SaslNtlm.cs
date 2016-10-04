@@ -2,13 +2,13 @@
 using System;
 
 namespace S22.Sasl.Mechanisms {
-	/// <summary>
-	/// Implements the Sasl NTLM authentication method which is used in various
-	/// Microsoft network protocol implementations.
-	/// </summary>
-	/// <remarks>Implemented with the help of the excellent documentation on
-	/// NTLM composed by Eric Glass.</remarks>
-	internal class SaslNtlm : SaslMechanism {
+    /// <summary>
+    /// Implements the Sasl NTLM authentication method which is used in various
+    /// Microsoft network protocol implementations.
+    /// </summary>
+    /// <remarks>Implemented with the help of the excellent documentation on
+    /// NTLM composed by Eric Glass.</remarks>
+    public class SaslNtlm : SaslMechanism {
 		protected bool completed = false;
 
 		/// <summary>

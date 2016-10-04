@@ -2,11 +2,11 @@
 using System;
 
 namespace S22.Sasl.Mechanisms {
-	/// <summary>
-	/// Implements the Sasl NTLMv2 authentication method which addresses
-	/// some of the security issues present in NTLM version 1.
-	/// </summary>
-	internal class SaslNtlmv2 : SaslNtlm {
+    /// <summary>
+    /// Implements the Sasl NTLMv2 authentication method which addresses
+    /// some of the security issues present in NTLM version 1.
+    /// </summary>
+    public class SaslNtlmv2 : SaslNtlm {
 		/// <summary>
 		/// Private constructor for use with Sasl.SaslFactory.
 		/// </summary>

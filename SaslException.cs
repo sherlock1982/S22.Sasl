@@ -4,7 +4,7 @@ namespace S22.Sasl {
 	/// <summary>
 	/// The exception is thrown when a Sasl-related error or unexpected condition occurs.
 	/// </summary>
-	internal class SaslException : Exception {
+	public class SaslException : Exception {
 		/// <summary>
 		/// Initializes a new instance of the SaslException class
 		/// </summary>

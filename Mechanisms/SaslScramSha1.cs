@@ -5,11 +5,11 @@ using System.Security.Cryptography;
 using System.Text;
 
 namespace S22.Sasl.Mechanisms {
-	/// <summary>
-	/// Implements the Sasl SCRAM-SHA-1 authentication method as described in
-	/// RFC 5802.
-	/// </summary>
-	internal class SaslScramSha1 : SaslMechanism {
+    /// <summary>
+    /// Implements the Sasl SCRAM-SHA-1 authentication method as described in
+    /// RFC 5802.
+    /// </summary>
+    public class SaslScramSha1 : SaslMechanism {
 		bool Completed = false;
 
 		/// <summary>

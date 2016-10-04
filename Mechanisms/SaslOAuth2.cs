@@ -2,10 +2,10 @@
 using System.Text;
 
 namespace S22.Sasl.Mechanisms {
-	/// <summary>
-	/// Implements the Sasl OAuth 2.0 authentication method.
-	/// </summary>
-	internal class SaslOAuth2 : SaslMechanism {
+    /// <summary>
+    /// Implements the Sasl OAuth 2.0 authentication method.
+    /// </summary>
+    public class SaslOAuth2 : SaslMechanism {
 		bool Completed = false;
 
 		/// <summary>

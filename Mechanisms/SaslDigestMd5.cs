@@ -6,11 +6,11 @@ using System.Security.Cryptography;
 using System.Text;
 
 namespace S22.Sasl.Mechanisms {
-	/// <summary>
-	/// Implements the Sasl Cram-Md5 authentication method as described in
-	/// RFC 2831.
-	/// </summary>
-	internal class SaslDigestMd5 : SaslMechanism {
+    /// <summary>
+    /// Implements the Sasl Cram-Md5 authentication method as described in
+    /// RFC 2831.
+    /// </summary>
+    public class SaslDigestMd5 : SaslMechanism {
 		bool Completed = false;
 
 		/// <summary>

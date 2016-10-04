@@ -6,7 +6,7 @@ namespace S22.Sasl {
 	/// The abstract base class from which all classes implementing a Sasl
 	/// authentication mechanism must derive.
 	/// </summary>
-	internal abstract class SaslMechanism {
+	public abstract class SaslMechanism {
 		/// <summary>
 		/// IANA name of the authentication mechanism.
 		/// </summary>

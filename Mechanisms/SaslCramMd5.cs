@@ -9,7 +9,7 @@ namespace S22.Sasl.Mechanisms {
 	/// Implements the Sasl Cram-Md5 authentication method as described in
 	/// RFC 2195.
 	/// </summary>
-	internal class SaslCramMd5 : SaslMechanism {
+	public class SaslCramMd5 : SaslMechanism {
 		bool Completed = false;
 
 		/// <summary>

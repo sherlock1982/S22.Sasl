@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 
 namespace S22.Sasl.Mechanisms {
-	/// <summary>
-	/// Implements the Sasl Plain authentication method as described in
-	/// RFC 4616.
-	/// </summary>
-	internal class SaslPlain : SaslMechanism {
+    /// <summary>
+    /// Implements the Sasl Plain authentication method as described in
+    /// RFC 4616.
+    /// </summary>
+    public class SaslPlain : SaslMechanism {
 		bool Completed = false;
 
 		/// <summary>
