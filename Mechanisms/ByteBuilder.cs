@@ -6,7 +6,7 @@ namespace S22.Sasl {
 	/// A utility class modeled after the BCL StringBuilder to simplify
 	/// building binary-data messages.
 	/// </summary>
-	internal class ByteBuilder {
+	public class ByteBuilder {
 		/// <summary>
 		/// The actual byte buffer.
 		/// </summary>

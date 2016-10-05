@@ -93,7 +93,7 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 		/// <remarks>The domain as well as the workstation name is restricted
 		/// to ASCII characters and must not be longer than 65536 characters.
 		/// </remarks>
-		public Type1Message(string domain, string workstation) {
+		public Type1Message(string domain, string workstation, Flags additionalFlags = default(Flags)) {
 			// Fixme: Is domain mandatory?
 			domain.ThrowIfNull("domain");
 			workstation.ThrowIfNull("workstation");
@@ -110,7 +110,7 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 			}
 
 			Flags = Flags.NegotiateUnicode | Flags.RequestTarget | Flags.NegotiateNTLM |
-				Flags.NegotiateDomainSupplied | Flags.NegotiateWorkstationSupplied;
+				Flags.NegotiateDomainSupplied | Flags.NegotiateWorkstationSupplied | additionalFlags;
 			// We spoof an OS version of Windows 7 Build 7601.
 			OSVersion = new OSVersion(6, 1, 7601);
 		}

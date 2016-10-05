@@ -8,8 +8,8 @@ namespace S22.Sasl.Mechanisms
 {
     public class SaslGssSpnego : SaslNtlmv2
     {
-        public SaslGssSpnego(NetworkCredential credential)
-            : base(credential)
+        public SaslGssSpnego(NetworkCredential credential, bool secure)
+            : base(credential, secure)
         {
 
         }

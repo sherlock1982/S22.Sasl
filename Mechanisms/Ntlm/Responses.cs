@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -52,23 +53,28 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 		/// specified challenge.</returns>
 		internal static byte[] ComputeNtlmv2Response(string target, NetworkCredential credential, byte[] targetInformation, byte[] challenge,
 			byte[] clientNonce) {
-			byte[] ntlmv2Hash = Ntlmv2Hash(target, credential),
-				blob = CreateBlob(targetInformation, clientNonce);
-			return LMv2Response(ntlmv2Hash, blob, challenge);
+            byte[] ntlmv2Hash = Ntlmv2Hash(target, credential);
+			return ComputeNtlmv2Response(ntlmv2Hash, targetInformation, challenge, clientNonce);
 		}
 
-		/// <summary>
-		/// Computes the LMv2-response to the challenge sent as part of an
-		/// NTLM type 2 message.
-		/// </summary>
-		/// <param name="target">The name of the authentication target.</param>
-		/// <param name="username">The user account to authenticate with.</param>
-		/// <param name="password">The user account password.</param>
-		/// <param name="challenge">The challenge sent by the server.</param>
-		/// <param name="clientNonce">A random 8-byte client nonce.</param>
-		/// <returns>An array of bytes representing the response to the
-		/// specified challenge.</returns>
-		internal static byte[] ComputeLMv2Response(string target, NetworkCredential credential, byte[] challenge, byte[] clientNonce) {
+        internal static byte[] ComputeNtlmv2Response(byte[] ntlmv2Hash, byte[] targetInformation, byte[] challenge, byte[] clientNonce)
+        {
+            byte[] blob = CreateBlob(targetInformation, clientNonce);
+            return LMv2Response(ntlmv2Hash, blob, challenge);
+        }
+
+        /// <summary>
+        /// Computes the LMv2-response to the challenge sent as part of an
+        /// NTLM type 2 message.
+        /// </summary>
+        /// <param name="target">The name of the authentication target.</param>
+        /// <param name="username">The user account to authenticate with.</param>
+        /// <param name="password">The user account password.</param>
+        /// <param name="challenge">The challenge sent by the server.</param>
+        /// <param name="clientNonce">A random 8-byte client nonce.</param>
+        /// <returns>An array of bytes representing the response to the
+        /// specified challenge.</returns>
+        internal static byte[] ComputeLMv2Response(string target, NetworkCredential credential, byte[] challenge, byte[] clientNonce) {
 			byte[] ntlmv2Hash = Ntlmv2Hash(target, credential);
 			return LMv2Response(ntlmv2Hash, clientNonce, challenge);
 		}
@@ -227,7 +233,7 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 		/// <returns>The NTLMv2 hash for the specified input values.</returns>
 		/// <exception cref="ArgumentNullException">Thrown if the username or
 		/// the password parameter is null.</exception>
-		private static byte[] Ntlmv2Hash(string target, NetworkCredential credential) {
+		public static byte[] Ntlmv2Hash(string target, NetworkCredential credential) {
             credential.UserName.ThrowIfNull("username");
             credential.Password.ThrowIfNull("password");
 			byte[] ntlmHash = NtlmHash(credential.Password);

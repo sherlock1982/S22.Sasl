@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Org.BouncyCastle.Crypto.Engines;
+using Org.BouncyCastle.Crypto.Parameters;
+using System;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace S22.Sasl.Mechanisms.Ntlm {
@@ -52,10 +55,12 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 			set;
 		}
 
-		/// <summary>
-		/// The offset at which the NTLM challenge response data starts.
-		/// </summary>
-		int NtlmOffset {
+        public byte[] SessionKey { get; private set; }
+
+        /// <summary>
+        /// The offset at which the NTLM challenge response data starts.
+        /// </summary>
+        int NtlmOffset {
 			get {
 				return LMOffset + LMResponse.Length;
 			}
@@ -169,9 +174,9 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 		/// a server name for local machine accounts. All security buffers will
 		/// be encoded as Unicode.</remarks>
 		public Type3Message(NetworkCredential credential, byte[] challenge,
-			string workstation, bool ntlmv2 = false, string targetName = null,
+			string workstation, Flags additionalFlags = default(Flags), bool ntlmv2 = false, string targetName = null,
 			byte[] targetInformation = null)
-			: this(credential, challenge, true, workstation, ntlmv2,
+			: this(credential, challenge, true, workstation, additionalFlags, ntlmv2,
 					targetName, targetInformation)
 		{
 		}
@@ -200,7 +205,7 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 		/// <exception cref="ArgumentNullException">Thrown if the username, password
 		/// or challenge parameters are null.</exception>
 		public Type3Message(NetworkCredential credential, byte[] challenge,
-			bool useUnicode, string workstation, bool ntlmv2 = false,
+			bool useUnicode, string workstation, Flags additionalFlags = default(Flags), bool ntlmv2 = false,
 			string targetName = null, byte[] targetInformation = null) {
             // Preconditions.
             credential.UserName.ThrowIfNull("username");
@@ -222,10 +227,35 @@ namespace S22.Sasl.Mechanisms.Ntlm {
 			} else {
 				byte[] cnonce = GetCNonce();
 				LMResponse = Responses.ComputeLMv2Response(targetName, credential, challenge, cnonce);
-				NtlmResponse = Responses.ComputeNtlmv2Response(targetName, credential, targetInformation, challenge, cnonce);
-			}
-			// We spoof an OS version of Windows 7 Build 7601.
-			OSVersion = new OSVersion(6, 1, 7601);
+                var ntlmv2Hash = Responses.Ntlmv2Hash(targetName, credential);
+				NtlmResponse = Responses.ComputeNtlmv2Response(ntlmv2Hash, targetInformation, challenge, cnonce);
+                Flags |= additionalFlags;
+                using (var hmac = new HMACMD5(ntlmv2Hash))
+                {
+                    var userSessionKey = hmac.ComputeHash(NtlmResponse, 0, 16);
+                    if ((Flags & Flags.NegotiateSeal) != default(Flags) || (Flags & Flags.NegotiateSign) != default(Flags))
+                    {
+                        // Sealing or signing required
+                        if ((Flags & Flags.NegotiateKeyExchange) != default(Flags))
+                        {
+                            // Key exchange initiated so need to generate a new key
+                            var cipher = new RC4Engine();
+                            cipher.Init(true, new KeyParameter(userSessionKey));
+                            SessionKey = new byte[16];
+                            using (var rnd = RandomNumberGenerator.Create())
+                                rnd.GetBytes(SessionKey);
+
+                            sessionKey = new byte[16];
+                            cipher.ProcessBytes(SessionKey, 0, SessionKey.Length, sessionKey, 0);
+                        }
+                        else
+                            // NTLMv2 User Session Key used
+                            SessionKey = userSessionKey;
+                    }
+                }
+            }
+            // We spoof an OS version of Windows 7 Build 7601.
+            OSVersion = new OSVersion(6, 1, 7601);
 		}
 
 		/// <summary>

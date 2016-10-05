@@ -110,7 +110,7 @@ namespace S22.Sasl.Mechanisms {
 		/// <returns>The initial response to the NTLM challenge.</returns>
 		/// <exception cref="SaslException">Thrown if the response could not
 		/// be computed.</exception>
-		protected byte[] ComputeInitialResponse(byte[] challenge) {
+		protected virtual byte[] ComputeInitialResponse(byte[] challenge) {
 			try {
 				string domain = Properties.ContainsKey("Domain") ?
 					Properties["Domain"] as string : "domain";
