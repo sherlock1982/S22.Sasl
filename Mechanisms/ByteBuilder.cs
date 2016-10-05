@@ -8,7 +8,7 @@ namespace S22.Sasl {
 	/// A utility class modeled after the BCL StringBuilder to simplify
 	/// building binary-data messages.
 	/// </summary>
-	public class ByteBuilder {
+	public class ByteBuilder : IDisposable {
 		/// <summary>
 		/// The actual byte buffer.
 		/// </summary>
@@ -158,5 +158,10 @@ namespace S22.Sasl {
 		public void Clear() {
             buffer.SetLength(0);
 		}
-	}
+
+        public void Dispose()
+        {
+            buffer.Dispose();
+        }
+    }
 }

@@ -21,14 +21,20 @@ namespace S22.Sasl.Security
         static readonly byte[] ServerToClientSealingKeyMagic = StringToByteArray(
             "73657373696f6e206b657920746f207365727665722d746f2d636c69656e74207365616c696e67206b6579206d6167696320636f6e7374616e7400");
 
-        int _sequence;
+        int _clientSequence;
         readonly HashAlgorithm _clientSigning;
+        readonly HashAlgorithm _serverSigning;
         readonly RC4Engine _clientSealing;
         readonly RC4Engine _serverSealing;
-        readonly byte[] _sealedConcat = new byte[8];
+        readonly byte[] _clientSeal = new byte[SealLength];
+        readonly byte[] _serverSeal = new byte[SealLength];
+        const int SealLength = 8;
         const int Version = 1;
-        const int SealLength = 16;
+        const int SealOffset = 4;
+        const int SequenceOffset = 12;
+        const int MessageOffset = 16;
         readonly object _encodeSync = new object();
+        readonly object _decodeSync = new object();
 
         public Ntlmv2Cipher(byte[] masterSessionKey)
         {
@@ -36,6 +42,7 @@ namespace S22.Sasl.Security
             {
                 byte[] clientSigningKey = GenerateSubkey(masterSessionKey, ClientToServerSigningKeyMagic, md5),
                        clientSealingKey = GenerateSubkey(masterSessionKey, ClientToServerSealingKeyMagic, md5),
+                       serverSigningKey = GenerateSubkey(masterSessionKey, ServerToClientSigningKeyMagic, md5),
                        serverSealingKey = GenerateSubkey(masterSessionKey, ServerToClientSealingKeyMagic, md5);
 
                 _clientSealing = new RC4Engine();
@@ -45,35 +52,52 @@ namespace S22.Sasl.Security
                 _serverSealing.Init(false, new KeyParameter(serverSealingKey));
 
                 _clientSigning = new HMACMD5(clientSigningKey);
+                _serverSigning = new HMACMD5(serverSigningKey);
             }
         }
 
         public void Dispose()
         {
             _clientSigning.Dispose();
+            _serverSigning.Dispose();
         }
 
         public byte[] EncodeMessage(byte[] buffer, int offset, int count)
         {
             lock (_encodeSync)
             {
-                var @sealed = new byte[count];
-                _clientSealing.ProcessBytes(buffer, offset, count, @sealed, 0);
+                using (var builder = new ByteBuilder())
+                {
+                    var @sealed = new byte[count];
+                    _clientSealing.ProcessBytes(buffer, offset, count, @sealed, 0);
 
-                var concatHash = _clientSigning.ComputeHash(new ByteBuilder().Append(_sequence).Append(buffer, offset, count).ToArray());
-                _clientSealing.ProcessBytes(concatHash, 0, 8, _sealedConcat, 0);
+                    var concatHash = _clientSigning.ComputeHash(builder.Append(_clientSequence).Append(buffer, offset, count).ToArray());
+                    builder.Clear();
+                    _clientSealing.ProcessBytes(concatHash, 0, _clientSeal.Length, _clientSeal, 0);
 
-                var signed = new ByteBuilder().Append(Version).Append(_sealedConcat).Append(_sequence).Append(@sealed).ToArray();
-                _sequence++;
-                return signed;
+                    var signed = builder.Append(Version).Append(_clientSeal).Append(_clientSequence).Append(@sealed).ToArray();
+                    _clientSequence++;
+                    return signed;
+                }
             }
         }
 
         public int DecodeMessage(byte[] buffer, int offset, int count, byte[] output, int outOff)
         {
-            // TODO check sealing
-            _serverSealing.ProcessBytes(buffer, offset + SealLength, count - SealLength, output, outOff);
-            return count - SealLength;
+            lock (_decodeSync)
+            {
+                _serverSealing.ProcessBytes(buffer, offset + MessageOffset, count - MessageOffset, output, outOff);
+                _serverSealing.ProcessBytes(buffer, offset + SealOffset, _serverSeal.Length, _serverSeal, 0);
+                //var serverSequence = BitConverter.ToUInt32(buffer, SequenceOffset);
+                using (var builder = new ByteBuilder())
+                {
+                    var concatHash = _serverSigning.ComputeHash(builder.Append(buffer, SequenceOffset, 4).Append(output, outOff, count - MessageOffset).ToArray());
+
+                    if (!_serverSeal.SequenceEqual(concatHash.Take(SealLength)))
+                        throw new Exception("Server signature check failed");
+                    return count - MessageOffset;
+                }
+            }
         }
 
         static byte[] GenerateSubkey(byte[] masterSessionKey, byte[] magicConstant, HashAlgorithm hash)
