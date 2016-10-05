@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace S22.Sasl {
@@ -10,32 +12,22 @@ namespace S22.Sasl {
 		/// <summary>
 		/// The actual byte buffer.
 		/// </summary>
-		byte[] buffer = new byte[1024];
-
-		/// <summary>
-		/// The current position in the buffer.
-		/// </summary>
-		int position = 0;
+		MemoryStream buffer = new MemoryStream(1024);
+        BinaryWriter writer;
 
 		/// <summary>
 		/// The length of the underlying data buffer.
 		/// </summary>
-		public int Length {
+		public long Length {
 			get {
-				return position;
+				return buffer.Position;
 			}
 		}
 
-		/// <summary>
-		/// Resizes the internal byte buffer.
-		/// </summary>
-		/// <param name="amount">Amount in bytes by which to increase the
-		/// size of the buffer.</param>
-		void Resize(int amount = 1024) {
-			byte[] newBuffer = new byte[buffer.Length + amount];
-			Array.Copy(buffer, newBuffer, buffer.Length);
-			buffer = newBuffer;
-		}
+        public ByteBuilder()
+        {
+            writer = new BinaryWriter(buffer);
+        }
 
 		/// <summary>
 		/// Appends one or several byte values to this instance.
@@ -43,10 +35,7 @@ namespace S22.Sasl {
 		/// <param name="values">Byte values to append.</param>
 		/// <returns>A reference to the calling instance.</returns>
 		public ByteBuilder Append(params byte[] values) {
-			if ((position + values.Length) >= buffer.Length)
-				Resize();
-			foreach (byte b in values)
-				buffer[position++] = b;
+            writer.Write(values);
 			return this;
 		}
 
@@ -60,11 +49,8 @@ namespace S22.Sasl {
 		/// <param name="count">The number of bytes to read from the buffer.</param>
 		/// <returns>A reference to the calling instance.</returns>
 		public ByteBuilder Append(byte[] buffer, int offset, int count) {
-			if ((position + count) >= buffer.Length)
-				Resize();
-			for (int i = 0; i < count; i++)
-				this.buffer[position++] = buffer[offset + i];
-			return this;
+            writer.Write(buffer, offset, count);
+            return this;
 		}
 
 		/// <summary>
@@ -75,12 +61,10 @@ namespace S22.Sasl {
 		/// big-endian.</param>
 		/// <returns>A reference to the calling instance.</returns>
 		public ByteBuilder Append(int value, bool bigEndian = false) {
-			if ((position + 4) >= buffer.Length)
-				Resize();
-			int[] o = bigEndian ? new int[4] { 3, 2, 1, 0 } :
-				new int[4] { 0, 1, 2, 3 };
-			for (int i = 0; i < 4; i++)
-				buffer[position++] = (byte) ((value >> (o[i] * 8)) & 0xFF);
+            var buffer = BitConverter.GetBytes(value);
+            if (bigEndian)
+                buffer = buffer.Reverse().ToArray();
+            writer.Write(buffer);
 			return this;
 		}
 
@@ -92,13 +76,11 @@ namespace S22.Sasl {
 		/// big-endian.</param>
 		/// <returns>A reference to the calling instance.</returns>
 		public ByteBuilder Append(short value, bool bigEndian = false) {
-			if ((position + 2) >= buffer.Length)
-				Resize();
-			int[] o = bigEndian ? new int[2] { 1, 0 } :
-				new int[2] { 0, 1 };
-			for (int i = 0; i < 2; i++)
-				buffer[position++] = (byte) ((value >> (o[i] * 8)) & 0xFF);
-			return this;
+            var buffer = BitConverter.GetBytes(value);
+            if (bigEndian)
+                buffer = buffer.Reverse().ToArray();
+            writer.Write(buffer);
+            return this;
 		}
 
 		/// <summary>
@@ -109,13 +91,11 @@ namespace S22.Sasl {
 		/// big-endian.</param>
 		/// <returns>A reference to the calling instance.</returns>
 		public ByteBuilder Append(ushort value, bool bigEndian = false) {
-			if ((position + 2) >= buffer.Length)
-				Resize();
-			int[] o = bigEndian ? new int[2] { 1, 0 } :
-				new int[2] { 0, 1 };
-			for (int i = 0; i < 2; i++)
-				buffer[position++] = (byte) ((value >> (o[i] * 8)) & 0xFF);
-			return this;
+            var buffer = BitConverter.GetBytes(value);
+            if (bigEndian)
+                buffer = buffer.Reverse().ToArray();
+            writer.Write(buffer);
+            return this;
 		}
 
 		/// <summary>
@@ -126,13 +106,11 @@ namespace S22.Sasl {
 		/// big-endian.</param>
 		/// <returns>A reference to the calling instance.</returns>
 		public ByteBuilder Append(uint value, bool bigEndian = false) {
-			if ((position + 4) >= buffer.Length)
-				Resize();
-			int[] o = bigEndian ? new int[4] { 3, 2, 1, 0 } :
-				new int[4] { 0, 1, 2, 3 };
-			for (int i = 0; i < 4; i++)
-				buffer[position++] = (byte) ((value >> (o[i] * 8)) & 0xFF);
-			return this;
+            var buffer = BitConverter.GetBytes(value);
+            if (bigEndian)
+                buffer = buffer.Reverse().ToArray();
+            writer.Write(buffer);
+            return this;
 		}
 
 		/// <summary>
@@ -143,14 +121,11 @@ namespace S22.Sasl {
 		/// big-endian.</param>
 		/// <returns>A reference to the calling instance.</returns>
 		public ByteBuilder Append(long value, bool bigEndian = false) {
-			if ((position + 8) >= buffer.Length)
-				Resize();
-			int[] o = bigEndian ? new int[8] { 7, 6, 5, 4, 3, 2, 1, 0 } :
-				new int[8] { 0, 1, 2, 3, 4, 5, 6, 7 };
-			for (int i = 0; i < 8; i++)
-				buffer[position++] = (byte) ((value >> (o[i] * 8)) & 0xFF);
-			return this;
-
+            var buffer = BitConverter.GetBytes(value);
+            if (bigEndian)
+                buffer = buffer.Reverse().ToArray();
+            writer.Write(buffer);
+            return this;
 		}
 
 		/// <summary>
@@ -163,13 +138,9 @@ namespace S22.Sasl {
 		/// default.</param>
 		/// <returns>A reference to the calling instance.</returns>
 		public ByteBuilder Append(string value, Encoding encoding = null) {
-			if (encoding == null)
-				encoding = Encoding.ASCII;
-			byte[] bytes = encoding.GetBytes(value);
-			if ((position + bytes.Length) >= buffer.Length)
-				Resize();
-			foreach (byte b in bytes)
-				buffer[position++] = b;
+            if (encoding == null)
+                encoding = Encoding.ASCII;
+            writer.Write(encoding.GetBytes(value));
 			return this;
 		}
 
@@ -178,18 +149,14 @@ namespace S22.Sasl {
 		/// </summary>
 		/// <returns>An array of bytes.</returns>
 		public byte[] ToArray() {
-			// Fixme: Do this properly.
-			byte[] b = new byte[position];
-			Array.Copy(buffer, b, position);
-			return b;
+			return buffer.ToArray();
 		}
 
 		/// <summary>
 		/// Removes all bytes from the current ByteBuilder instance.
 		/// </summary>
 		public void Clear() {
-			buffer = new byte[1024];
-			position = 0;
+            buffer.SetLength(0);
 		}
 	}
 }
