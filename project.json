@@ -1,9 +1,15 @@
 {
   "title": "S22.Sasl.Core",
-  "projectUrl": "https://github.com/sherlock1982/S22.Sasl",
   "version": "1.0.0-*",
   "description": "Authentication and Security Layer (SASL) for .NET",
   "authors": [ "nikolaio" ],
+
+  "packOptions": {
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/sherlock1982/S22.Sasl"
+    }
+  },
 
   "dependencies": {
   },
