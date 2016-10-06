@@ -6,7 +6,7 @@ namespace S22.Sasl {
 	/// <summary>
 	/// A factory class for producing instances of Sasl mechanisms.
 	/// </summary>
-	internal static class SaslFactory {
+	public static class SaslFactory {
 		/// <summary>
 		/// A dictionary of Sasl mechanisms registered with the factory class.
 		/// </summary>
