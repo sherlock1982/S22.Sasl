@@ -22,7 +22,7 @@ demonstrates how it can be used to perform authentication.
         {
             static void Main(string[] args)
             {
-                SaslMechanism m = SaslFactory.Create("Digest-Md5");
+                SaslMechanism m = SaslFactory.Create("DIGEST-MD5");
 
                 // Add properties needed by authentication mechanism.
                 m.Properties.Add("Credential", new NetworkCredential("Foo", "Bar"));
