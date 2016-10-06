@@ -80,16 +80,16 @@ Here's a more advanced example to create NTLMv2 secure channel.
 
 ### Features
 
-The library supports the following authentication mechanisms:
- * Plain
- * Cram-Md5
- * NTLM
- * NTLMv2
- * OAuth
- * OAuth 2.0
- * Digest-Md5
- * Scram-Sha-1
- * SRP
+The library supports the following authentication mechanisms (and identifiers):
+ * Plain (PLAIN)
+ * Cram-Md5 (CRAM-MD5)
+ * NTLM (NTLM)
+ * NTLMv2 (NTLMV2)
+ * OAuth (OAUTH)
+ * OAuth 2.0 (OAUTH2)
+ * Digest-Md5 (DIGEST-MD5)
+ * Scram-Sha-1 (SCRAM-SHA-1)
+ * SRP (SRP)
 
 Custom SASL Security Providers can be implemented through a simple plugin
 mechanism.
