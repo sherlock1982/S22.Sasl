@@ -8,32 +8,74 @@ SMTP, XMPP and others.
 
 ### Usage & Examples
 
-To use the library add the S22.Sasl.dll assembly to your project references in Visual Studio. Here's
+To use the library add the S22.Sasl.Core.dll assembly to your project references in Visual Studio. Here's
 a simple example which instantiates a new instance of the Digest-Md5 authentication mechanism and
 demonstrates how it can be used to perform authentication.
 
-	using System;
-	using S22.Sasl;
+    using System;
+    using S22.Sasl;
+    using System.Net;
 
-	namespace Test {
-		class Program {
-			static void Main(string[] args) {
-				SaslMechanism m = SaslFactory.Create("Digest-Md5");
+    namespace Test
+    {
+        class Program
+        {
+            static void Main(string[] args)
+            {
+                SaslMechanism m = SaslFactory.Create("Digest-Md5");
 
-				// Add properties needed by authentication mechanism.
-				m.Properties.Add("Username", "Foo");
-				m.Properties.Add("Password", "Bar");
+                // Add properties needed by authentication mechanism.
+                m.Properties.Add("Credential", new NetworkCredential("Foo", "Bar"));
 
-				while(!m.IsCompleted)
-				{
-					byte[] serverChallenge = GetDataFromServer(...);
-					byte[] clientResponse = m.ComputeResponse(serverChallenge);
+                byte[] challenge = null;
+                while (!m.IsCompleted)
+                {
+                    challenge = m.GetResponse(challenge);
+                    SendMyDataToServer(challenge);
 
-					SendMyDataToServer(clientResponse);
-				}
-			}
-		}
-	}
+                    challenge = ReceiveMyDataFromServer();
+                }
+            }
+        }
+    }
+
+Here's a more advanced example to create NTLMv2 secure channel.
+
+    using System;
+    using S22.Sasl;
+    using System.Net;
+    using S22.Sasl.Mechanisms;
+    using S22.Sasl.Security;
+    using System.IO;
+
+    namespace Test
+    {
+        class Program
+        {
+            static void Main(string[] args)
+            {
+                var m = new SaslNtlmv2(new NetworkCredential("Foo", "Bar"), true);
+                // This is your server stream
+                Stream serverStream;
+
+                byte[] challenge = null;
+                while (!m.IsCompleted)
+                {
+                    challenge = m.GetResponse(challenge);
+                    // Send and receive authentication data from server
+                    SendMyDataToServer(serverStream, challenge);
+
+                    challenge = ReceiveMyDataFromServer(serverStream);
+                }
+
+                // Create a secure stream
+                var secureStream = new SaslStream(serverStream, new Ntlmv2Cipher(m.SessionKey));
+
+                SendMyDataToServer(secureStream, request);
+                var response = ReceiveMyDataFromServer(secureStream);
+            }
+        }
+    }
 
 
 ### Features
