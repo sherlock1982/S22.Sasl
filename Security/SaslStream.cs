@@ -125,6 +125,8 @@ namespace S22.Sasl.Security
                 _bufferStream.CopyTo(newStream);
                 _bufferStream.Dispose();
                 _bufferStream = newStream;
+
+                _bufferStream.Seek(0, SeekOrigin.Begin);
             }
         }
 
