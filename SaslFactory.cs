@@ -73,10 +73,16 @@ namespace S22.Sasl {
 
 			// Could be moved to App.config to support SASL "plug-in" mechanisms.
 			var list = new Dictionary<string, Type>() {
-				{ "PLAIN", typeof(Sasl.Mechanisms.SaslPlain) },
-				{ "DIGEST-MD5", typeof(Sasl.Mechanisms.SaslDigestMd5) },
-				{ "SCRAM-SHA-1", typeof(Sasl.Mechanisms.SaslScramSha1) },
-			};
+				{ "PLAIN", typeof(Mechanisms.SaslPlain) },
+				{ "CRAM-MD5", typeof(Mechanisms.SaslCramMd5) },
+				{ "SCRAM-SHA-1", typeof(Mechanisms.SaslScramSha1) },
+                { "NTLM", typeof(Mechanisms.SaslNtlm) },
+                { "NTLMV2", typeof(Mechanisms.SaslNtlmv2) },
+                { "OAUTH", typeof(Mechanisms.SaslOAuth) },
+                { "OAUTH2", typeof(Mechanisms.SaslOAuth2) },
+                { "DIGEST-MD5", typeof(Mechanisms.SaslDigestMd5) },
+                { "SRP", typeof(Mechanisms.SaslSrp) },
+            };
 			foreach (string key in list.Keys)
 				Mechanisms.Add(key, list[key]);
 		}
